@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bitfloat"
+dynamic = ["version"]
+description = "IEEE 754 floating-point arithmetic with arbitrary precision"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+authors = [
+    {name = "sjjeong94", email = "sjjeong94@gmail.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/sjjeong94/bitfloat"
+Repository = "https://github.com/sjjeong94/bitfloat"
+
+[tool.setuptools.dynamic]
+version = {attr = "bitfloat.__version__"}
