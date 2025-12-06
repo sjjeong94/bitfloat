@@ -573,7 +573,7 @@ class BitFloat:
         # Divide mantissas
         # We need to shift the dividend left to maintain precision
         # Shift by mantissa_bits to get enough precision for the division
-        self_mant_shifted = self_mant << (self.mantissa_bits + 1)
+        self_mant_shifted = self_mant << self.mantissa_bits
         result_mant = self_mant_shifted // other_mant
 
         # Normalize the result

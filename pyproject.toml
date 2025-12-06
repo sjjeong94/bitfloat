@@ -22,5 +22,8 @@ classifiers = [
 Homepage = "https://github.com/sjjeong94/bitfloat"
 Repository = "https://github.com/sjjeong94/bitfloat"
 
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
 [tool.setuptools.dynamic]
 version = {attr = "bitfloat.__version__"}
