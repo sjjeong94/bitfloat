@@ -17,7 +17,9 @@ class TestBitFloatBasics:
 
     def test_init_custom_bits(self):
         """Test initialization with custom bit widths."""
-        bf = BitFloat(sign=0, exponent=5, mantissa=10, exponent_bits=5, mantissa_bits=10)
+        bf = BitFloat(
+            sign=0, exponent=5, mantissa=10, exponent_bits=5, mantissa_bits=10
+        )
         assert bf.exponent_bits == 5
         assert bf.mantissa_bits == 10
         assert bf.exponent == 5
@@ -73,12 +75,12 @@ class TestFromFloat:
 
     def test_from_float_infinity(self):
         """Test converting infinity."""
-        bf = BitFloat.from_float(float('inf'))
+        bf = BitFloat.from_float(float("inf"))
         assert math.isinf(bf.to_float())
 
     def test_from_float_nan(self):
         """Test converting NaN."""
-        bf = BitFloat.from_float(float('nan'))
+        bf = BitFloat.from_float(float("nan"))
         assert math.isnan(bf.to_float())
 
     def test_from_float_small_denormal(self):
@@ -87,6 +89,84 @@ class TestFromFloat:
         result = bf.to_float()
         assert result > 0
         assert result < 1e-38  # Should be denormal
+
+
+class TestIntConversion:
+    """Test conversion between BitFloat and integer bit patterns."""
+
+    def test_to_int_zero(self):
+        """Test converting zero to integer bit pattern."""
+        bf = BitFloat(sign=0, exponent=0, mantissa=0)
+        assert bf.to_int() == 0
+
+    def test_to_int_one(self):
+        """Test converting 1.0 to integer bit pattern."""
+        bf = BitFloat.from_float(1.0)
+        int_val = bf.to_int()
+        assert int_val == 0x3F800000  # IEEE 754 representation of 1.0 in float32
+
+    def test_to_int_negative(self):
+        """Test converting negative number to integer bit pattern."""
+        bf = BitFloat(sign=1, exponent=127, mantissa=0)  # -1.0
+        int_val = bf.to_int()
+        assert int_val == 0xBF800000  # IEEE 754 representation of -1.0
+
+    def test_from_int_zero(self):
+        """Test creating BitFloat from zero bit pattern."""
+        bf = BitFloat.from_int(0)
+        assert bf.sign == 0
+        assert bf.exponent == 0
+        assert bf.mantissa == 0
+        assert bf.to_float() == 0.0
+
+    def test_from_int_one(self):
+        """Test creating BitFloat from 1.0 bit pattern."""
+        bf = BitFloat.from_int(0x3F800000)  # 1.0 in float32
+        assert bf.to_float() == 1.0
+
+    def test_from_int_negative(self):
+        """Test creating BitFloat from negative bit pattern."""
+        bf = BitFloat.from_int(0xBF800000)  # -1.0 in float32
+        assert bf.to_float() == -1.0
+
+    def test_from_int_infinity(self):
+        """Test creating infinity from bit pattern."""
+        bf = BitFloat.from_int(0x7F800000)  # +inf in float32
+        assert math.isinf(bf.to_float())
+        assert bf.to_float() > 0
+
+    def test_from_int_nan(self):
+        """Test creating NaN from bit pattern."""
+        bf = BitFloat.from_int(0x7FC00000)  # NaN in float32
+        assert math.isnan(bf.to_float())
+
+    def test_int_roundtrip(self):
+        """Test roundtrip conversion: int -> BitFloat -> int."""
+        test_values = [
+            0x00000000,  # +0.0
+            0x3F800000,  # 1.0
+            0x40000000,  # 2.0
+            0xBF800000,  # -1.0
+            0x7F800000,  # +inf
+            0xFF800000,  # -inf
+        ]
+        for val in test_values:
+            bf = BitFloat.from_int(val)
+            assert bf.to_int() == val
+
+    def test_int_roundtrip_custom_format(self):
+        """Test roundtrip with custom bit widths."""
+        # F16 example
+        bf = F16.from_int(0x3C00)  # 1.0 in float16
+        assert bf.to_int() == 0x3C00
+        assert abs(bf.to_float() - 1.0) < 1e-6
+
+    def test_from_int_with_explicit_bits(self):
+        """Test from_int with explicit bit widths."""
+        bf = BitFloat.from_int(0x3C00, exponent_bits=5, mantissa_bits=10)  # float16 1.0
+        assert bf.exponent_bits == 5
+        assert bf.mantissa_bits == 10
+        assert abs(bf.to_float() - 1.0) < 1e-6
 
 
 class TestArithmetic:
@@ -136,7 +216,7 @@ class TestArithmetic:
 
     def test_add_infinity(self):
         """Test addition with infinity."""
-        a = BitFloat.from_float(float('inf'))
+        a = BitFloat.from_float(float("inf"))
         b = BitFloat.from_float(1.0)
         result = a + b
         assert math.isinf(result.to_float())
@@ -242,7 +322,9 @@ class TestEdgeCases:
 
     def test_bit_clamping(self):
         """Test that bits are properly clamped to their ranges."""
-        bf = BitFloat(sign=2, exponent=512, mantissa=0xFFFFFFFF, exponent_bits=8, mantissa_bits=23)
+        bf = BitFloat(
+            sign=2, exponent=512, mantissa=0xFFFFFFFF, exponent_bits=8, mantissa_bits=23
+        )
         assert bf.sign == 0  # 2 & 1 = 0
         assert bf.exponent == 0  # 512 & 0xFF = 0
         assert bf.mantissa == 0x7FFFFF  # Clamped to 23 bits

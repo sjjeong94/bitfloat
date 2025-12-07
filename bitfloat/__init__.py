@@ -1,4 +1,5 @@
-__version__ = "0.1.0"
+__version__ = "0.1.1"
+
 
 class BitFloat:
     """
@@ -147,6 +148,49 @@ class BitFloat:
         else:
             return cls(sign, exponent, mantissa, exponent_bits, mantissa_bits)
 
+    def to_int(self) -> int:
+        """
+        Convert the BitFloat representation to its integer bit pattern.
+        """
+        return (
+            (self.sign << (self.exponent_bits + self.mantissa_bits))
+            | (self.exponent << self.mantissa_bits)
+            | self.mantissa
+        )
+
+    @classmethod
+    def from_int(
+        cls, value: int, exponent_bits: int = None, mantissa_bits: int = None
+    ) -> "BitFloat":
+        """
+        Create a BitFloat from its integer bit pattern.
+
+        Args:
+            value: The integer bit pattern
+            exponent_bits: Number of bits for exponent (uses class default if None)
+            mantissa_bits: Number of bits for mantissa (uses class default if None)
+        Returns:
+            BitFloat instance representing the value
+        """
+        # For subclasses, use their default bit widths if not specified
+        if exponent_bits is None or mantissa_bits is None:
+            # Create a temporary instance to get default values
+            temp = cls()
+            if exponent_bits is None:
+                exponent_bits = temp.exponent_bits
+            if mantissa_bits is None:
+                mantissa_bits = temp.mantissa_bits
+
+        sign = (value >> (exponent_bits + mantissa_bits)) & 0x1
+        exponent = (value >> mantissa_bits) & ((1 << exponent_bits) - 1)
+        mantissa = value & ((1 << mantissa_bits) - 1)
+
+        # For subclasses, only pass sign, exponent, mantissa
+        if cls != BitFloat:
+            return cls(sign, exponent, mantissa)
+        else:
+            return cls(sign, exponent, mantissa, exponent_bits, mantissa_bits)
+
     def __repr__(self) -> str:
         """
         String representation showing both bit pattern and float value.
@@ -174,7 +218,7 @@ class BitFloat:
 
         return (
             f"float(e{self.exponent_bits}m{self.mantissa_bits}): "
-            f"{sign_str}|{exp_str}|{mant_str} = {float_value} ({num_type})"
+            f"{sign_str}|{exp_str}|{mant_str} = {hex(self.to_int())} = {float_value} ({num_type})"
         )
 
     def __str__(self) -> str:
@@ -634,6 +678,7 @@ class F64(BitFloat):
     def __init__(self, sign: int = 0, exponent: int = 0, mantissa: int = 0):
         super().__init__(sign, exponent, mantissa, exponent_bits=11, mantissa_bits=52)
 
+
 class F32(BitFloat):
     """
     A subclass of BitFloat representing standard 32-bit float (float32).
@@ -651,6 +696,7 @@ class F16(BitFloat):
     def __init__(self, sign: int = 0, exponent: int = 0, mantissa: int = 0):
         super().__init__(sign, exponent, mantissa, exponent_bits=5, mantissa_bits=10)
 
+
 class BF16(BitFloat):
     """
     A subclass of BitFloat representing bfloat16 float.
@@ -658,6 +704,7 @@ class BF16(BitFloat):
 
     def __init__(self, sign: int = 0, exponent: int = 0, mantissa: int = 0):
         super().__init__(sign, exponent, mantissa, exponent_bits=8, mantissa_bits=7)
+
 
 class F8E4M3(BitFloat):
     """
@@ -676,6 +723,7 @@ class F8E5M2(BitFloat):
     def __init__(self, sign: int = 0, exponent: int = 0, mantissa: int = 0):
         super().__init__(sign, exponent, mantissa, exponent_bits=5, mantissa_bits=2)
 
+
 class F4E2M1(BitFloat):
     """
     A subclass of BitFloat representing 4-bit float with 2 exponent bits and 1 mantissa bit.
@@ -683,6 +731,7 @@ class F4E2M1(BitFloat):
 
     def __init__(self, sign: int = 0, exponent: int = 0, mantissa: int = 0):
         super().__init__(sign, exponent, mantissa, exponent_bits=2, mantissa_bits=1)
+
 
 class BF24(BitFloat):
     """
